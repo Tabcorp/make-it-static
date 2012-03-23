@@ -77,8 +77,28 @@ class MakeItStaticDisplayOptions {
 			"callback_url",
 			"Callback URL"
 		);
+
+		$this->create_text_option(
+			"main_static_folder_path_validate",
+			"make_it_static_section_msg_editor",
+			"Additional editor functionalities",
+			"display_options_section_editor_functionalities",
+			false,
+			"",
+			""
+		);
 	}
 
+	/**
+	 * creates text option box or just generic messaage
+	 * @param $validation_callback
+	 * @param $section_id
+	 * @param $section_title
+	 * @param $section_description_callback
+	 * @param $current_settings_field_id
+	 * @param $current_settings_field_name
+	 * @param $title
+	 */
 	public function create_text_option($validation_callback, $section_id, $section_title, $section_description_callback, $current_settings_field_id,  $current_settings_field_name, $title) {
 		//before we begin we need to register the settings, the option name is the table field, wordpress save it this way
 		//since we want to save all the options in json format in one field, we constant this
@@ -88,7 +108,10 @@ class MakeItStaticDisplayOptions {
 		add_settings_section($section_id, $section_title, array($this, $section_description_callback), 'make_it_static_plugin');
 
 		//setup the actual input field, this is for the static file system directory in the publishing server
-		add_settings_field($current_settings_field_id, $title, array($this,'display_input_field'), 'make_it_static_plugin', $section_id, array("field_name" => $current_settings_field_name, "field_id" => $current_settings_field_id));
+		//if no input field then just display the message
+		if ($current_settings_field_id) {
+			add_settings_field($current_settings_field_id, $title, array($this,'display_input_field'), 'make_it_static_plugin', $section_id, array("field_name" => $current_settings_field_name, "field_id" => $current_settings_field_id));
+		}
 	}
 
 	public function display_options() {
@@ -111,6 +134,10 @@ class MakeItStaticDisplayOptions {
 
 	public function display_options_section_callback() {
 		include_once($this->view_dir . "plugin_settings_section_callback.php");
+	}
+
+	public function display_options_section_editor_functionalities() {
+		include_once($this->view_dir . "plugin_settings_section_editor_functionalities.php");
 	}
 
 	public function display_input_field($field_args) {
