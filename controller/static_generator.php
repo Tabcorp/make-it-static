@@ -62,9 +62,7 @@ class StaticGenerator {
 
 		//unset the last element as we don't need this
 		unset($categories_array[count($categories_array) - 1]);
-
-		$categories_array = array_reverse($categories_array);
-
+		
 		//now we generate the file name
 		$filename = implode(self::FILENAME_SEPARATOR, $categories_array);
 		$filename .= self::FILENAME_SEPARATOR . sanitize_title_with_dashes($current_post->post_title);
