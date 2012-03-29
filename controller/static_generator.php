@@ -121,15 +121,35 @@ class StaticGenerator {
 	 * @param $subdirectory - optional - this is to specify subdirectory after the defined static content FS
 	 */
 	public function write_to_static_directory($content, $filename, $subdirectory='', $use_nl2br = true) {
-		//ok we need to strip the shortcodes!
-		$content = str_replace('<p>[static_code]', '', $content); //ok just to be sure we strip a variety with <p> as tiny MCE tends to add this
-		$content = str_replace('</p>[static_code]', '', $content);
-		$content = str_replace('[static_code]', '', $content);
-		$content = str_replace('[/static_code]', '', $content);
+		//we need to strip the shortcodes!
+		//ok now we need to avoid things inside static codes from being nl2br'ed
+		//this means extracting those inside the static code shortcode and putting it back after nl2br
+		$regex_rule = "/\[static_code\](.+?)\[\/static_code\]/is";
+		preg_match_all($regex_rule, $content, $matches);
+		$matches_with_tag = $matches[0];
+		$matches_content = $matches[1];
+		$match_count = 0;
+		if (count($matches_with_tag)) {
+			foreach ($matches_with_tag as $match_with_tag) {
+				$content = str_replace($match_with_tag, "__placeholder_$match_count", $content);
+				$match_count++;
+			}
+		}
 
+		//conver newlines to br
 		if ($use_nl2br) {
 			$content = nl2br($content);
 		}
+
+		//now put the escaped contents back
+		$match_count = 0;
+		if (count($matches_with_tag)) {
+			foreach ($matches_content as $matche_content) {
+				$content = str_replace("__placeholder_$match_count", $matche_content, $content);
+				$match_count++;
+			}
+		}
+
 		$options = get_option(MakeItStatic::CONFIG_TABLE_FIELD);
 		//get the set static directory first
 		$static_target_directory = $options["fs_static_directory"];
