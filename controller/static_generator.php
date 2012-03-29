@@ -128,12 +128,16 @@ class StaticGenerator {
 		preg_match_all($regex_rule, $content, $matches);
 		$matches_with_tag = $matches[0];
 		$matches_content = $matches[1];
+
+		$placeholder_array = array();
 		$match_count = 0;
 		if (count($matches_with_tag)) {
 			foreach ($matches_with_tag as $match_with_tag) {
-				$content = str_replace($match_with_tag, "__placeholder_$match_count", $content);
+				$placeholder_array[] = "__placeholder_$match_count";
 				$match_count++;
 			}
+
+			$content = str_replace($matches_with_tag, $placeholder_array, $content);
 		}
 
 		//conver newlines to br
@@ -144,10 +148,9 @@ class StaticGenerator {
 		//now put the escaped contents back
 		$match_count = 0;
 		if (count($matches_with_tag)) {
-			foreach ($matches_content as $matche_content) {
-				$content = str_replace("__placeholder_$match_count", $matche_content, $content);
-				$match_count++;
-			}
+
+			$content = str_replace($placeholder_array, $matches_content, $content);
+
 		}
 
 		$options = get_option(MakeItStatic::CONFIG_TABLE_FIELD);
