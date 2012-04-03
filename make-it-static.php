@@ -60,9 +60,10 @@ class MakeItStatic {
 		//we need an add_action for NGGallery so we can sync static servers
 		add_action('ngg_added_new_image', array($this, 'nggallery_image_upload_hook'));
 
-		add_action( 'admin_init', array($this, 'add_html_lock' ));
+		add_action('admin_init', array($this, 'add_html_lock' ));
 
-		//add_filter('the_title', array($this, 'add_html_lock' ));
+		//we need to hide quick edit as we don't support this
+		add_filter('post_row_actions', array($this, 'hide_quick_edit'), 10, 1);
 	}
 
 	/**
@@ -226,6 +227,12 @@ class MakeItStatic {
 		$callback_urls = $options["nggallery_callback_url"];
 		$static_generator->callback_file($ws_image_path, $callback_urls, $current_filename, 'nggallery_image');
 	}
+
+	public function hide_quick_edit($actions) {
+		unset($actions['inline hide-if-no-js']);
+		return $actions;
+	}
+
 }
 
 $make_it_static = new MakeItStatic();
