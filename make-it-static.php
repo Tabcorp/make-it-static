@@ -64,6 +64,15 @@ class MakeItStatic {
 
 		//we need to hide quick edit as we don't support this
 		add_filter('post_row_actions', array($this, 'hide_quick_edit'), 10, 1);
+		add_filter('page_row_actions', array($this, 'hide_quick_edit'), 10, 1);
+
+		//remove meta boxes as we don't need this
+		add_action('admin_head', array($this, 'remove_unsupported_meta_boxes'));
+
+		//disable autosave as we don't really need this with static contents
+		add_action('wp_print_scripts', function(){
+			wp_deregister_script('autosave');
+		});
 	}
 
 	/**
@@ -214,6 +223,10 @@ class MakeItStatic {
 		return $new_content;
 	}
 
+	/**
+	 * call the callback after nggallery image upload
+	 * @param $image_info
+	 */
 	public function nggallery_image_upload_hook($image_info) {
 		//get the gallery path gallerypath
 		$nggdb = new nggdb();
@@ -228,11 +241,57 @@ class MakeItStatic {
 		$static_generator->callback_file($ws_image_path, $callback_urls, $current_filename, 'nggallery_image');
 	}
 
+	/**
+	 * remove quick edit link as we don't support this
+	 * @param $actions
+	 * @return mixed
+	 */
 	public function hide_quick_edit($actions) {
 		unset($actions['inline hide-if-no-js']);
+		unset($actions['view']);
+		unset($actions['edit-slug-box']);
 		return $actions;
 	}
 
+
+	/**
+	 * remove unsupported meta boxes since make-it-static doesn't use this
+	 * but only do this if this is configured in the plugin settings
+	 */
+	public function remove_unsupported_meta_boxes() {
+		$options = get_option(MakeItStatic::CONFIG_TABLE_FIELD);
+		$disable_meta_boxes = $options["disable_unsupported_meta_boxes"];
+		if ($disable_meta_boxes == "y") {
+			remove_meta_box('commentstatusdiv','post','normal');
+			remove_meta_box('commentstatusdiv','page','normal');
+			remove_meta_box('commentsdiv','post','normal');
+			remove_meta_box('commentsdiv','page','normal');
+			remove_meta_box('slugdiv','post','normal');
+			remove_meta_box('slugdiv','page','normal');
+			remove_meta_box('trackbacksdiv','post','normal');
+			remove_meta_box('trackbacksdiv','page','normal');
+			remove_meta_box('postcustom','post','normal');
+			remove_meta_box('postcustom','page','normal');
+			remove_meta_box('postexcerpt','post','normal');
+			remove_meta_box('postexcerpt','page','normal');
+			remove_meta_box('tagsdiv-post_tag','post','normal');
+			remove_meta_box('tagsdiv-post_tag','page','normal');
+			remove_meta_box('postimagediv','post','normal');
+			remove_meta_box('postimagediv','page','normal');
+			remove_meta_box('formatdiv','post','normal');
+			remove_meta_box('formatdiv','page','normal');
+
+			//part of the section that we want to remove is also the permalinks as this doesn't apply to static contents
+			//the idea is the presentation of url paths is up to the user of this static content
+			echo "
+			<script type='text/javascript'>
+				jQuery(document).ready(function() {
+					jQuery('#edit-slug-box').hide();
+				});
+			</script>
+			";
+		}
+	}
 }
 
 $make_it_static = new MakeItStatic();
