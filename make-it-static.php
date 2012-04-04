@@ -261,25 +261,28 @@ class MakeItStatic {
 	public function remove_unsupported_meta_boxes() {
 		$options = get_option(MakeItStatic::CONFIG_TABLE_FIELD);
 		$disable_meta_boxes = $options["disable_unsupported_meta_boxes"];
+
 		if ($disable_meta_boxes == "y") {
-			remove_meta_box('commentstatusdiv','post','normal');
-			remove_meta_box('commentstatusdiv','page','normal');
-			remove_meta_box('commentsdiv','post','normal');
-			remove_meta_box('commentsdiv','page','normal');
-			remove_meta_box('slugdiv','post','normal');
-			remove_meta_box('slugdiv','page','normal');
-			remove_meta_box('trackbacksdiv','post','normal');
-			remove_meta_box('trackbacksdiv','page','normal');
-			remove_meta_box('postcustom','post','normal');
-			remove_meta_box('postcustom','page','normal');
-			remove_meta_box('postexcerpt','post','normal');
-			remove_meta_box('postexcerpt','page','normal');
-			remove_meta_box('tagsdiv-post_tag','post','normal');
-			remove_meta_box('tagsdiv-post_tag','page','normal');
-			remove_meta_box('postimagediv','post','normal');
-			remove_meta_box('postimagediv','page','normal');
-			remove_meta_box('formatdiv','post','normal');
-			remove_meta_box('formatdiv','page','normal');
+			$meta_boxes_to_disable = array(
+				'commentstatusdiv',
+				'commentsdiv',
+				'slugdiv',
+				'trackbacksdiv',
+				'postcustom',
+				'postexcerpt',
+				'tagsdiv-post_tag',
+				'postimagediv',
+				'formatdiv'
+			);
+
+			foreach ($meta_boxes_to_disable as $meta_box_name) {
+				remove_meta_box($meta_box_name,'post','normal');
+				remove_meta_box($meta_box_name,'page','normal');
+				remove_meta_box($meta_box_name,'post','side');
+				remove_meta_box($meta_box_name,'page','side');
+				remove_meta_box($meta_box_name,'post','advanced');
+				remove_meta_box($meta_box_name,'page','advanced');
+			}
 
 			//part of the section that we want to remove is also the permalinks as this doesn't apply to static contents
 			//the idea is the presentation of url paths is up to the user of this static content
