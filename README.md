@@ -25,6 +25,9 @@ Features
 'formatdiv'<br />
 'edit slug link'<br />
 'quick edit link'<br />
+- Curl Callback to configurable URLs after creating static post/page
+- Curl Callback to configurable URLs after uploading images to NextGen Gallery
+- Autosave is disabled when this plugin is installed
 
 Installation
 ------------
