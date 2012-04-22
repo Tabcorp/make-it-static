@@ -170,8 +170,6 @@ class StaticGenerator {
 				$filename = $current_filename_prefix . self::FILENAME_SEPARATOR . sanitize_title_with_dashes($post_in_category->post_title);
 				$expected_filenames[] = $filename . ".html";
 			}
-			print_r($expected_filenames);
-
 		} else { //pages
 			//TODO: we need to handle pages too, but at this point this is not required yet
 		}
