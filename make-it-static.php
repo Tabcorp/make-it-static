@@ -103,6 +103,12 @@ class MakeItStatic {
 
 		//add filter to save our html lock
 		add_filter('wp_insert_post_data', array($this, 'save_html_lock_state'), '99', 2);
+
+		//to be save, default editor should be html
+		add_filter('wp_default_editor', function() {
+			return 'html';
+		});
+
 	}
 
 	/**
