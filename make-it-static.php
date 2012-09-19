@@ -3,7 +3,7 @@
 Plugin Name: make-it-static.php
 Plugin URI: http://www.luxbet.com/
 Description: A plugin to disperse blog posts as static contents to different servers
-Version: 1.0
+Version: 1.1
 Author: Arvy Budiarto
 Author URI: http://www.luxbet.com
 */
