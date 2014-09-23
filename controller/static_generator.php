@@ -92,6 +92,52 @@ class StaticGenerator {
 	}
 
 	/**
+	 * Clean static post files
+	 * @param int $post_id - required
+	 * @param string $subdirectory - optional
+	 * Arthur Kusumadjaja, 22 September 2014
+	 */
+	public function clean_up_static_posts($post_id, $subdirectory = "") {
+
+		//if no post id then abort
+		if (!$post_id) {
+			return false;
+		}
+
+		$filenames = $this->generate_files($post_id);
+
+		if ($filenames) {
+			//get directory
+			$options = get_option(MakeItStatic::CONFIG_TABLE_FIELD);
+			$static_target_directory = $options["fs_static_directory"];
+
+			//get sub directory if any
+			if ($subdirectory) {
+				$static_target_directory .= $subdirectory . "/";
+			}
+
+			$directory_handle = opendir($static_target_directory);
+
+			//go thru files in directory
+			while (false !== ($current_filename = readdir($directory_handle))) {
+
+				//check current filename if invalid or directory
+				if ($current_filename != "." && $current_filename != ".." && !is_dir($static_target_directory . $current_filename)) {
+
+					if (in_array($current_filename, $filenames)) {
+						//current filename match with our array therefore need to delete
+						unlink($static_target_directory . $current_filename);
+					}
+
+				}
+
+			}
+
+			return true;
+		}
+	}
+
+	/**
 	 * Save the HTML editor lock for the current post id
 	 * @param $post_id
 	 */
@@ -195,6 +241,106 @@ class StaticGenerator {
 
 		//now write the static contents
 		$this->write_to_static_directory($toc_html, 'toc.html', 'pages', false);
+	}
+
+	/**
+	 * Generating filename(s) from all selected categories
+	 * Returns array of filename(s)
+	 * Arthur Kusumadjaja, 22 September 2014
+	 */
+	public function generate_files($post_id) {
+		// filename will be an array
+		$filenames = array();
+		$current_post = get_post($post_id);
+
+		// get filename prefix based on selected categories
+		$filename_prefix = $this->generate_filename_prefix($post_id);
+
+		// build filename
+		$count_prefix = count($filename_prefix);
+		if ($count_prefix > 0) {
+			for ($i = 0; $i < $count_prefix; $i++) {
+				$filenames[] = $filename_prefix[$i] . sanitize_title_with_dashes($current_post->post_title);
+			}
+		}
+
+		// write file based on filename
+		$count_filename = count($filenames);
+		if ($count_filename > 0) {
+			for ($i = 0; $i < $count_filename; $i++) {
+				$filenames[$i] .= ".html"; //yes prefix with html
+				$this->write_to_static_directory($current_post->post_content, $filenames[$i], '', true);
+			}
+		}
+
+		//yes also save the state for the editor, so we know which editor to kick in
+		$this->save_html_lock_state($post_id);
+
+		return $filenames;
+	}
+
+	/**
+	 * Generating filename prefix of all selected categories
+	 * Returns array of filename prefixes
+	 * Arthur Kusumadjaja, 22 September 2014
+	 */
+	public function generate_filename_prefix($post_id) {
+		$category = get_the_category($post_id);
+
+		$count = count($category);
+		$name_raw = array();
+
+		// array not null
+		if ($count > 0) {
+			for ($i = 0; $i < $count; $i++) {
+				$name = '';
+
+				// get parent id if exist
+				if ($category[$i]->{'parent'} || $category[$i]->{'parent'} != '0') {
+					$name .= $category[$i]->{'parent'}."#@#" ;
+				}
+
+				// get id
+				$name .= $category[$i]->{'term_id'}."#@#";
+
+				// put all together
+				$name_raw[] = $name;
+			}
+		}
+
+		return $this->generate_name_from_id($name_raw);
+	}
+
+	/**
+	 * Convert all of the ids in the array into respective names
+	 * Returns array of filename ready
+	 * Arthur Kusumadjaja, 22 September 2014
+	 */
+	public function generate_name_from_id($name_raw) {
+		// container for converted name
+		$name_converted = array();
+
+		$count_raw = count($name_raw);
+		if ($count_raw > 0) {
+			//go thru all raw data
+			for ($i = 0; $i < $count_raw; $i++) {
+				//get each section
+				$name_explode = explode('#@#', $name_raw[$i]);
+
+				$count_explode = count($name_explode);
+				for ($y = 0; $y < $count_explode-1; $y++) {
+					$cat_id = $name_explode[$y];
+
+					//get name from wp
+					$name_explode[$y] = get_cat_name($cat_id);
+				}
+
+				//glue names and save to container
+				$name_converted[] = implode('#@#', $name_explode);
+			}
+		}
+
+		return $name_converted;
 	}
 
 	/**

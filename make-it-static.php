@@ -31,6 +31,11 @@ class MakeItStatic {
 	public $error_code = "";
 
 	/**
+	 * @var int - variable to save post id before saving, this is required
+	 * */
+	private $pre_saved_post_id = 0;
+
+	/**
 	 * @var string - variable to save the prefix before saving, this is required
 	 */
 	private $pre_saved_post_prefix = "";
@@ -55,15 +60,16 @@ class MakeItStatic {
 
 		//now, we have to tell Wordpress to actually static this properly
 		//add the hook to post save!
-		add_action('publish_post', array($this, 'convert_post_to_static'));
-		add_action('publish_page', array($this, 'convert_page_to_static'));
+		//add_action('publish_post', array($this, 'convert_post_to_static'));
+		//add_action('publish_page', array($this, 'convert_page_to_static'));
+		add_action( 'save_post', array($this, 'convert_post_to_static_array') );
 
 		//add filter hook for before saving the page, we need to delete the static files in case use changed the category
 		//wp_insert_post_data
 		add_filter('wp_insert_post_data', array($this, 'save_current_post_data'), '99', 2);
 
 		//to clean up previous category after inserion
-		add_action('wp_insert_post', array($this, 'clean_previous_category'));
+		//add_action('wp_insert_post', array($this, 'clean_previous_category'));
 
 		//append the after-save messages list with our own error messages
 		add_filter('post_updated_messages', array($this, 'custom_message_filter'));
@@ -108,7 +114,6 @@ class MakeItStatic {
 		add_filter('wp_default_editor', function() {
 			return 'html';
 		});
-
 	}
 
 	/**
@@ -130,6 +135,10 @@ class MakeItStatic {
 		$current_post_category = $current_post_categories[0];
 
 		$this->pre_saved_post_category = $current_post_category->cat_ID;
+
+		//save current post id, Arthur Kusumadjaja, 22 September 2014
+		$this->pre_saved_post_id = $post_arr['ID'];
+		$static_generator->clean_up_static_posts($this->pre_saved_post_id);
 
 		return $data;
 	}
@@ -161,8 +170,12 @@ class MakeItStatic {
 	 */
 	public function add_html_lock($post_object) {
 
+		$post_id = null;
+
 		//we need to make sure we save the state of the editor too
-		$post_id = $post_object->ID;
+		if ($post_object) {
+			$post_id = $post_object->ID;
+		}
 
 		//make sure we know what post is this
 		$display_sidebar_options = new MakeItStaticSidebar();
@@ -248,6 +261,25 @@ class MakeItStatic {
 			add_filter('redirect_post_location', array($this, 'custom_error_message_redirect'));
 		}
 
+	}
+
+	/**
+	 * Convert new post data display into static physical file based on selected categories
+	 * @param $post_id
+	 * Arthur Kusumadjaja, 23 September 2014
+	 */
+	public function convert_post_to_static_array($post_id) {
+		$static_generator = new StaticGenerator();
+
+		// generate static files
+		$static_generator->generate_files($post_id);
+
+		$error_code = $static_generator->get_error_code();
+
+		if ($error_code) {
+			$this->error_code = $error_code;
+			add_filter('redirect_post_location', array($this, 'custom_error_message_redirect'));
+		}
 	}
 
 	/**
